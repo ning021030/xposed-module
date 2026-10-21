@@ -20,17 +20,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Force Create Complete Android Project
+    - name: Force Create Complete Android Project Structure
       run: |
-        # 1. 创建所有必要的目录
+        # 1. 强制在云端创建所有标准的物理目录结构
         mkdir -p app/src/main/java/com/example/module
-        mkdir -p app/src/main/assets/META-INF/xposed
+        mkdir -p app/src/main/resources/META-INF/xposed
         
-        # 2. 自动写入标准的 AndroidManifest.xml（带 Xposed 识别标识）
+        # 2. 强制生成标准的 AndroidManifest.xml（含 LSPosed 识别所需的元数据）
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-            package="com.example.module">
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
             <application
                 android:allowBackup="true"
@@ -49,10 +48,10 @@ jobs:
         </manifest>
         EOF
 
-        # 3. 自动写入 Xposed 入口声明
-        echo "com.example.module.MainModule" > app/src/main/assets/META-INF/xposed/java_init.list
+        # 3. 强制生成 Xposed 入口声明文件
+        echo "com.example.module.MainModule" > app/src/main/resources/META-INF/xposed/java_init.list
 
-        # 4. 自动写入 Java 源码
+        # 4. 强制生成 MainModule.java 源码
         cat << 'EOF' > app/src/main/java/com/example/module/MainModule.java
         package com.example.module;
 
