@@ -20,21 +20,90 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Force Create Complete Android Project Structure
+    - name: Scaffold Standard Android Project
       run: |
-        # 1. 强制在云端创建所有标准的物理目录结构
+        # 1. 彻底清空当前目录杂乱的文件，重新构建规范的单模块结构
+        rm -rf app settings.gradle build.gradle
+        
         mkdir -p app/src/main/java/com/example/module
         mkdir -p app/src/main/resources/META-INF/xposed
-        
-        # 2. 强制生成标准的 AndroidManifest.xml（含 LSPosed 识别所需的元数据）
+
+        # 2. 写入根目录 settings.gradle
+        cat << 'EOF' > settings.gradle
+        pluginManagement {
+            repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+        dependencyResolutionManagement {
+            repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+            repositories {
+                google()
+                mavenCentral()
+                maven { url 'https://api.xposed.info/' }
+            }
+        }
+        rootProject.name = "ApexMasterEngine"
+        include ':app'
+        EOF
+
+        # 3. 写入根目录 build.gradle
+        cat << 'EOF' > build.gradle
+        buildscript {
+            repositories {
+                google()
+                mavenCentral()
+            }
+            dependencies {
+                classpath 'com.android.tools.build:gradle:8.2.0'
+            }
+        }
+        allprojects {
+            repositories {
+                google()
+                mavenCentral()
+            }
+        }
+        EOF
+
+        # 4. 写入 app/build.gradle
+        cat << 'EOF' > app/build.gradle
+        plugins {
+            id 'com.android.application'
+        }
+
+        android {
+            namespace 'com.example.module'
+            compileSdk 34
+
+            defaultConfig {
+                applicationId "com.example.module"
+                minSdk 24
+                targetSdk 34
+                versionCode 100
+                versionName "2.0"
+            }
+
+            compileOptions {
+                sourceCompatibility JavaVersion.VERSION_17
+                targetCompatibility JavaVersion.VERSION_17
+            }
+        }
+
+        dependencies {
+            compileOnly 'de.robv.android.xposed:api:82'
+        }
+        EOF
+
+        # 5. 写入 AndroidManifest.xml
         cat << 'EOF' > app/src/main/AndroidManifest.xml
         <?xml version="1.0" encoding="utf-8"?>
         <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-
             <application
                 android:allowBackup="true"
                 android:supportsRtl="true">
-                
                 <meta-data
                     android:name="xposedmodule"
                     android:value="true" />
@@ -48,10 +117,10 @@ jobs:
         </manifest>
         EOF
 
-        # 3. 强制生成 Xposed 入口声明文件
+        # 6. 写入 Xposed 入口
         echo "com.example.module.MainModule" > app/src/main/resources/META-INF/xposed/java_init.list
 
-        # 4. 强制生成 MainModule.java 源码
+        # 7. 写入 Java 源码
         cat << 'EOF' > app/src/main/java/com/example/module/MainModule.java
         package com.example.module;
 
