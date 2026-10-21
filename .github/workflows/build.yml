@@ -20,15 +20,39 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Auto-generate Source and Resources
+    - name: Force Create Complete Android Project
       run: |
+        # 1. 创建所有必要的目录
         mkdir -p app/src/main/java/com/example/module
-        mkdir -p app/src/main/resources/META-INF/xposed
+        mkdir -p app/src/main/assets/META-INF/xposed
         
-        # 自动写入入口声明
-        echo "com.example.module.MainModule" > app/src/main/resources/META-INF/xposed/java_init.list
+        # 2. 自动写入标准的 AndroidManifest.xml（带 Xposed 识别标识）
+        cat << 'EOF' > app/src/main/AndroidManifest.xml
+        <?xml version="1.0" encoding="utf-8"?>
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+            package="com.example.module">
 
-        # 自动写入带 Hook 逻辑的 MainModule.java 源码
+            <application
+                android:allowBackup="true"
+                android:supportsRtl="true">
+                
+                <meta-data
+                    android:name="xposedmodule"
+                    android:value="true" />
+                <meta-data
+                    android:name="xposeddescription"
+                    android:value="Apex Master Dynamic Scope" />
+                <meta-data
+                    android:name="xposedminversion"
+                    android:value="54" />
+            </application>
+        </manifest>
+        EOF
+
+        # 3. 自动写入 Xposed 入口声明
+        echo "com.example.module.MainModule" > app/src/main/assets/META-INF/xposed/java_init.list
+
+        # 4. 自动写入 Java 源码
         cat << 'EOF' > app/src/main/java/com/example/module/MainModule.java
         package com.example.module;
 
@@ -50,8 +74,7 @@ jobs:
         EOF
 
     - name: Generate Gradle Wrapper
-      run: |
-        gradle wrapper --gradle-version 8.5
+      run: gradle wrapper --gradle-version 8.5
 
     - name: Build with Gradle
       run: ./gradlew assembleDebug
