@@ -10,8 +10,8 @@ android {
         applicationId "com.example.module"
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode 100
+        versionName "2.0"
     }
 
     compileOptions {
@@ -22,4 +22,15 @@ android {
 
 dependencies {
     compileOnly 'de.robv.android.xposed:api:82'
+}
+
+// 自动在编译时生成 Xposed 入口文件，彻底解决网页端建目录丢失的问题
+android.applicationVariants.all { variant ->
+    variant.mergeAssetsProvider.configure {
+        doLast {
+            def outputDir = file("$buildDir/intermediates/merged_assets/${variant.name}/out/META-INF/xposed")
+            outputDir.mkdirs()
+            file("$outputDir/java_init.list").text = "com.example.module.MainModule\n"
+        }
+    }
 }
